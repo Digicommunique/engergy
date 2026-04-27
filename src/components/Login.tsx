@@ -7,15 +7,24 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
+  const [email, setEmail] = useState('admin@enersys.erp');
+  const [password, setPassword] = useState('12345678');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onLogin();
-    }, 1200);
+    setError('');
+    
+    if (email === 'admin@enersys.erp' && password === '12345678') {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        onLogin();
+      }, 1200);
+    } else {
+      setError('Invalid email or password');
+    }
   };
 
   return (
@@ -49,12 +58,19 @@ export default function Login({ onLogin }: LoginProps) {
           <h2 className="text-2xl font-bold text-brand-navy mb-2">Welcome Back</h2>
           <p className="text-gray-500 mb-8">Enter your credentials to access the ERP</p>
 
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
               <input
                 type="email"
-                defaultValue="admin@enersys.erp"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-steel focus:border-brand-steel outline-none transition-all placeholder:text-gray-400"
                 placeholder="name@company.com"
@@ -67,7 +83,8 @@ export default function Login({ onLogin }: LoginProps) {
               </div>
               <input
                 type="password"
-                defaultValue="password123"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-steel focus:border-brand-steel outline-none transition-all placeholder:text-gray-400"
                 placeholder="••••••••"
