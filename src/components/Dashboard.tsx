@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Activity, Zap, Package, AlertTriangle, ArrowUpRight, TrendingUp, TrendingDown, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Activity, Zap, Package, AlertTriangle, ArrowUpRight, TrendingUp, TrendingDown, ShieldCheck, ShieldAlert, IndianRupee } from 'lucide-react';
 import { BATTERY_MODELS } from '../constants';
 import { InventoryItem } from './Inventory';
 import { WarrantyRegistration } from '../App';
@@ -30,7 +30,14 @@ export default function Dashboard({ inventory, registrations, complaints }: Dash
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard 
+          label="Total Revenue" 
+          val="₹1.28 Cr" 
+          detail="Target: ₹1.5 Cr"
+          highlightClass="text-brand-electric"
+          icon={IndianRupee}
+        />
         <StatCard 
           label="Warranty Base" 
           val={registrations.length.toString()} 

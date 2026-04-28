@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 
 export default function RepairManagement() {
+  const [isIndentOpen, setIsIndentOpen] = useState(false);
+  const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'qc' | 'completed'>('pending');
 
   const [repairJobs, setRepairJobs] = useState([
@@ -27,6 +29,18 @@ export default function RepairManagement() {
     ));
   };
 
+  const handleIndent = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsIndentOpen(false);
+    alert('Spare parts requisition sent to Inventory Warehouse.');
+  };
+
+  const handleAssign = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAssignOpen(false);
+    alert('Repair Job Assigned successfuly to the selected technician.');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -35,16 +49,95 @@ export default function RepairManagement() {
           <p className="text-gray-500 text-xs">Technician Assignment & Component Level Service</p>
         </div>
         <div className="flex gap-3">
-          <button className="bg-white border border-gray-200 text-brand-navy px-4 py-2.5 rounded-lg font-bold text-xs hover:bg-gray-50 flex items-center gap-2">
+          <button 
+            onClick={() => setIsIndentOpen(true)}
+            className="bg-white border border-gray-200 text-brand-navy px-4 py-2.5 rounded-lg font-bold text-xs hover:bg-gray-50 flex items-center gap-2 transition-all shadow-sm"
+          >
              <PackageOpen className="w-4 h-4" />
              Indent Parts
           </button>
-          <button className="bg-brand-navy text-white px-5 py-2.5 rounded-lg font-bold text-xs hover:bg-brand-steel transition-all flex items-center gap-2 shadow-lg">
+          <button 
+            onClick={() => setIsAssignOpen(true)}
+            className="bg-brand-navy text-white px-5 py-2.5 rounded-lg font-bold text-xs hover:bg-brand-steel transition-all flex items-center gap-2 shadow-lg"
+          >
              <Wrench className="w-4 h-4" />
              Assign Job
           </button>
         </div>
       </div>
+
+      {/* Indent Modal */}
+      {isIndentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 bg-brand-navy text-white flex justify-between items-center">
+              <h3 className="font-bold">Spare Parts Indent</h3>
+              <button onClick={() => setIsIndentOpen(false)} className="text-white/60 hover:text-white">
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleIndent} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 capitalize mb-1">Part Category</label>
+                <select className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brand-steel">
+                  <option>Connectors & Terminals</option>
+                  <option>Circuit Components</option>
+                  <option>Casing & Hardware</option>
+                  <option>Chemical Agents</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 capitalize mb-1">Quantity</label>
+                  <input type="number" defaultValue="1" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brand-steel" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 capitalize mb-1">Job Priority</label>
+                  <select className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brand-steel">
+                    <option>Standard</option>
+                    <option>Urgent</option>
+                    <option>Critical</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" className="w-full py-3 bg-brand-navy text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-brand-steel transition-all">Generate Requisition</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Modal */}
+      {isAssignOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 bg-brand-navy text-white flex justify-between items-center">
+              <h3 className="font-bold">Assign New Repair Job</h3>
+              <button onClick={() => setIsAssignOpen(false)} className="text-white/60 hover:text-white">
+                <Wrench className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAssign} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 capitalize mb-1">Battery Serial Number</label>
+                <input type="text" placeholder="SN-XXXXX-X" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brand-steel" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 capitalize mb-1">Assign Technician</label>
+                <select className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brand-steel">
+                  <option>Imran Khan (4 active)</option>
+                  <option>Sarah Jones (2 active)</option>
+                  <option>David Miller (0 active)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 capitalize mb-1">Initial Diagnosis</label>
+                <textarea rows={3} placeholder="Describe the reported fault..." className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brand-steel resize-none"></textarea>
+              </div>
+              <button type="submit" className="w-full py-3 bg-brand-navy text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-brand-steel transition-all">Submit Assignment</button>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="glass-card p-5 bg-indigo-50/30 border-t-2 border-indigo-500">

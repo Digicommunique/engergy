@@ -3,13 +3,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Smartphone, QrCode, Share2, MessageSquare, 
   Battery, ShieldCheck, Wrench, Gift, 
-  MapPin, Bell, Search, Star, ChevronRight, X
+  MapPin, Bell, Search, Star, ChevronRight, X, Trash2
 } from 'lucide-react';
 
 export default function CustomerEngagement() {
   const [activeScreen, setActiveScreen] = useState('home');
   const [notificationSent, setNotificationSent] = useState(false);
   const [qrDest, setQrDest] = useState('auth.powerwise.com/v2/scan');
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [activeModal, setActiveModal] = useState<'campaign' | 'dest' | 'appraisal' | 'none'>('none');
+  const [tempDest, setTempDest] = useState(qrDest);
+  const [appraisalSerial, setAppraisalSerial] = useState('');
+  const [appraisalResult, setAppraisalResult] = useState<{ value: number, health: number } | null>(null);
 
   const stats = [
     { label: 'Active App Users', val: '4,280', icon: Smartphone, color: 'text-brand-electric' },
@@ -21,6 +26,24 @@ export default function CustomerEngagement() {
   const handleSendOffer = () => {
     setNotificationSent(true);
     setTimeout(() => setNotificationSent(false), 3000);
+    alert('Promotional offer pushed to all active mobile users.');
+  };
+
+  const handleGenerateBatch = () => {
+    setIsGeneratingQR(true);
+    setTimeout(() => {
+      setIsGeneratingQR(false);
+      alert('Batch of 500 Unique QR IDs generated and synced with Production Line A.');
+    }, 2000);
+  };
+
+  const handleCheckAppraisal = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate lookup
+    setAppraisalResult({
+      value: Math.floor(2500 + Math.random() * 2000),
+      health: Math.floor(40 + Math.random() * 50)
+    });
   };
 
   return (
@@ -31,19 +54,67 @@ export default function CustomerEngagement() {
           <p className="text-gray-500 text-xs">QR-Linked Mobile Ecosystem & Direct-to-Consumer Analytics</p>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-brand-navy hover:bg-gray-50 flex items-center gap-2 transition-all">
+          <button 
+            onClick={() => setActiveModal('campaign')}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-brand-navy hover:bg-gray-50 flex items-center gap-2 transition-all shadow-sm"
+          >
             <Share2 className="w-3.5 h-3.5" />
             Marketing Campaigns
           </button>
           <button 
-            onClick={() => alert('Generating batch QR codes for production line...')}
-            className="px-4 py-2 bg-brand-navy text-white rounded-lg text-xs font-bold hover:bg-brand-steel flex items-center gap-2 transition-all shadow-lg"
+            onClick={handleGenerateBatch}
+            disabled={isGeneratingQR}
+            className={`px-4 py-2 border rounded-lg text-xs font-bold flex items-center gap-2 transition-all shadow-lg ${
+              isGeneratingQR ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-brand-navy text-white border-brand-navy hover:bg-brand-steel'
+            }`}
           >
-            <QrCode className="w-3.5 h-3.5" />
-            Generate Batch QRs
+            {isGeneratingQR ? (
+              <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-brand-navy rounded-full animate-spin" />
+            ) : (
+              <QrCode className="w-3.5 h-3.5" />
+            )}
+            {isGeneratingQR ? 'Generating...' : 'Generate Batch QRs'}
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {activeModal === 'campaign' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 bg-brand-navy text-white flex justify-between items-center">
+                <h3 className="font-bold">Campaign Designer</h3>
+                <button onClick={() => setActiveModal('none')} className="hover:rotate-90 transition-transform">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-xs text-gray-500 mb-2">Select a campaign template to broadcast to users</p>
+                {['Summer Peak Exchange', 'Referral Multiplier', 'Monsoon Health Checkup'].map(c => (
+                  <button 
+                    key={c}
+                    onClick={() => {
+                      alert(`Campaign "${c}" has been scheduled for broadcast.`);
+                      setActiveModal('none');
+                    }}
+                    className="w-full text-left p-4 rounded-xl border border-gray-100 hover:border-brand-electric hover:bg-brand-navy/5 transition-all group"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm text-brand-navy">{c}</span>
+                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-electric transition-colors" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {stats.map((s, idx) => (
@@ -128,7 +199,14 @@ export default function CustomerEngagement() {
                       <div className="bg-gradient-to-r from-brand-navy to-brand-steel p-4 rounded-2xl text-white">
                         <h4 className="font-bold text-xs mb-1">Exchange & Save</h4>
                         <p className="text-[10px] text-white/70 mb-3 text-pretty leading-relaxed">Get up to ₹4,000 off on your next purchase by recycling your old battery.</p>
-                        <button className="w-full bg-brand-electric text-brand-navy text-[10px] font-bold py-2 rounded-lg hover:brightness-110 active:scale-95 transition-all">
+                        <button 
+                          onClick={() => {
+                            setAppraisalResult(null);
+                            setAppraisalSerial('');
+                            setActiveModal('appraisal');
+                          }}
+                          className="w-full bg-brand-electric text-brand-navy text-[10px] font-bold py-2 rounded-lg hover:brightness-110 active:scale-95 transition-all"
+                        >
                           Check Appraisal Value
                         </button>
                       </div>
@@ -222,8 +300,8 @@ export default function CustomerEngagement() {
                 <div className="flex gap-2 w-full">
                   <button 
                     onClick={() => {
-                      const newDest = prompt('Enter new QR destination URL:', qrDest);
-                      if (newDest) setQrDest(newDest);
+                      setTempDest(qrDest);
+                      setActiveModal('dest');
                     }}
                     className="flex-1 bg-white border border-gray-200 text-brand-navy text-[10px] font-bold py-2.5 rounded-lg hover:bg-gray-50 transition-colors uppercase tracking-wider shadow-sm"
                   >
@@ -240,13 +318,135 @@ export default function CustomerEngagement() {
             </div>
           </div>
 
+          <AnimatePresence>
+            {activeModal === 'dest' && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-sm">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+                >
+                  <div className="p-6 bg-brand-navy text-white flex justify-between items-center">
+                    <h3 className="font-bold">Update QR Destination</h3>
+                    <button onClick={() => setActiveModal('none')}><X className="w-5 h-5" /></button>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Global Redirect URL</label>
+                       <input 
+                        type="text" 
+                        value={tempDest}
+                        onChange={(e) => setTempDest(e.target.value)}
+                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-brand-steel font-mono"
+                       />
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setQrDest(tempDest);
+                        setActiveModal('none');
+                        alert('Global QR Destination updated across all production nodes.');
+                      }}
+                      className="w-full py-3 bg-brand-navy text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-brand-steel transition-all shadow-lg"
+                    >
+                      Save Configuration
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {activeModal === 'appraisal' && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-sm">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+                >
+                  <div className="p-6 bg-brand-navy text-white flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <Trash2 className="w-5 h-5 text-brand-electric" />
+                      <h3 className="font-bold">Scrap Appraisal Tool</h3>
+                    </div>
+                    <button onClick={() => setActiveModal('none')}><X className="w-5 h-5" /></button>
+                  </div>
+                  <div className="p-8 space-y-6">
+                    <form onSubmit={handleCheckAppraisal} className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Battery Serial Number</label>
+                        <div className="flex gap-2">
+                          <input 
+                            required
+                            type="text" 
+                            placeholder="SN-XXXXX"
+                            value={appraisalSerial}
+                            onChange={(e) => setAppraisalSerial(e.target.value)}
+                            className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-steel font-mono"
+                          />
+                          <button type="submit" className="bg-brand-navy text-white px-4 rounded-xl hover:bg-brand-steel transition-all">
+                            <Search className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+
+                    {appraisalResult && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-6 rounded-2xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 space-y-4"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Estimated Value</p>
+                            <p className="text-3xl font-black text-brand-navy">₹{appraisalResult.value.toLocaleString()}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Residual Health</p>
+                            <p className="text-xl font-bold text-emerald-500">{appraisalResult.health}%</p>
+                          </div>
+                        </div>
+                        <div className="w-full bg-emerald-100 h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-emerald-500 h-full" style={{ width: `${appraisalResult.health}%` }} />
+                        </div>
+                        <p className="text-[10px] text-gray-500 italic">Value based on current Lead (Pb) market price of ₹168/kg and assumed 45% plate degradation.</p>
+                        <div className="flex gap-2 pt-2">
+                          <button 
+                            onClick={() => alert('Voucher code EX-SAVE-881 generated!')}
+                            className="flex-1 bg-emerald-500 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg"
+                          >
+                            Apply to Exchange
+                          </button>
+                          <button 
+                             onClick={() => setActiveModal('none')}
+                             className="px-6 py-3 border border-emerald-200 text-emerald-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-50 transition-all"
+                          >
+                            Save Quote
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
           <div className="glass-card overflow-hidden">
              <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                <h3 className="font-bold text-xs uppercase tracking-widest text-brand-navy flex items-center gap-2">
                  <Bell className="w-3.5 h-3.5 text-brand-electric" />
                  Recent Engagement Activities
                </h3>
-               <button className="text-[10px] font-bold text-brand-electric uppercase hover:underline">View All Notifications</button>
+                <button 
+                  onClick={() => alert('Loading historic engagement logs...')}
+                  className="text-[10px] font-bold text-brand-electric uppercase hover:underline"
+                >
+                  View All Notifications
+                </button>
              </div>
              <div className="divide-y divide-gray-50">
                <EngagementRow user="Rajesh Kumar" action="Registered for Warranty" item="INV-150-TUB" time="2 mins ago" status="Verified" />

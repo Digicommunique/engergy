@@ -56,7 +56,7 @@ export default function MRPEngine({ models, inventory, setInventory }: MRPEngine
     // Validation: Block production if any critical item has "None" status
     const hasAbsoluteZero = calculation.some(r => r.status === 'None');
     if (hasAbsoluteZero) {
-      alert("PRODUCTION BLOCKED: Critical materials missing. Please procurement required items.");
+      alert("PRODUCTION BLOCKED: Critical materials missing. Please procure required items.");
       return;
     }
 
@@ -68,7 +68,10 @@ export default function MRPEngine({ models, inventory, setInventory }: MRPEngine
         }
         return invItem;
       }));
-      setAllocationLog({ msg: `Successfully deducted materials for batch of ${quantity} units.`, type: 'success' });
+      setAllocationLog({ 
+        msg: `INVENTORY DEDUCTED: Material stock physically reduced for Batch of ${quantity} units. Ready for Production Release.`, 
+        type: 'success' 
+      });
     } else {
       setInventory(prev => prev.map(invItem => {
         const req = calculation.find(r => r.material === invItem.material);
@@ -77,10 +80,17 @@ export default function MRPEngine({ models, inventory, setInventory }: MRPEngine
         }
         return invItem;
       }));
-      setAllocationLog({ msg: `Materials soft-reserved for batch of ${quantity} units. Available stock updated in ledger.`, type: 'success' });
+      setAllocationLog({ 
+        msg: `MATERIALS RESERVED: ${quantity} units committed in virtual ledger. Physical stock remains at rest.`, 
+        type: 'success' 
+      });
     }
 
     setIsAllocated(true);
+  };
+
+  const handleReleaseToProduction = () => {
+    alert(`PRODUCTION ORDER ISSUED: Batch ${Math.floor(100000 + Math.random() * 900000)} created. Moving to Production Management module for Line Assignment.`);
   };
 
   const totalStatus = calculation 
@@ -261,29 +271,40 @@ export default function MRPEngine({ models, inventory, setInventory }: MRPEngine
                      <Lock className={`w-4 h-4 ${allocationMode === 'Hard' ? 'text-status-danger' : ''}`} />
                      {allocationMode === 'Soft' ? 'Soft Reservation: Inventory Ledger remains physically untouched.' : 'Hard Deduction: Assets will be permanently removed from inventory on execution.'}
                    </div>
-                   <button 
-                     disabled={isAllocated || totalStatus === 'Blocked'}
-                     onClick={handleAllocate}
-                     className={`px-10 py-3 rounded-lg font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${
-                       isAllocated 
-                         ? 'bg-emerald-500 text-white cursor-default' 
-                         : totalStatus === 'Blocked' 
-                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                           : 'bg-brand-navy text-white hover:bg-brand-steel'
-                     }`}
-                   >
-                     {isAllocated ? (
-                       <>
-                         <CheckCircle2 className="w-4 h-4" />
-                         Allocation Confirmed
-                       </>
-                     ) : (
-                       <>
-                         <Play className="w-4 h-4 fill-current" />
-                         Execute {allocationMode} Allocation
-                       </>
-                     )}
-                   </button>
+                   <div className="flex gap-3">
+                    {isAllocated && allocationMode === 'Hard' && (
+                      <button 
+                        onClick={handleReleaseToProduction}
+                        className="px-6 py-3 bg-brand-electric text-brand-navy rounded-lg font-black text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center gap-2"
+                      >
+                        <Play className="w-4 h-4 fill-current" />
+                        Release to Production
+                      </button>
+                    )}
+                    <button 
+                      disabled={isAllocated || totalStatus === 'Blocked'}
+                      onClick={handleAllocate}
+                      className={`px-10 py-3 rounded-lg font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${
+                        isAllocated 
+                          ? 'bg-emerald-500 text-white cursor-default' 
+                          : totalStatus === 'Blocked' 
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-brand-navy text-white hover:bg-brand-steel'
+                      }`}
+                    >
+                      {isAllocated ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          Allocation Confirmed
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-4 h-4" />
+                          Execute {allocationMode} Allocation
+                        </>
+                      )}
+                    </button>
+                   </div>
                 </div>
               </motion.div>
             )}

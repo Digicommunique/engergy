@@ -27,16 +27,30 @@ export default function FinishedGoodsInventory() {
     return stocks.filter(item => {
       const matchesSearch = item.serial.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.model.toLowerCase().includes(searchTerm.toLowerCase());
+                           item.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.batch.toLowerCase().includes(searchTerm.toLowerCase());
       
       if (activeTab === 'aging') {
-        const days = parseInt(item.aged.split(' ')[0]);
-        return matchesSearch && days > 30;
+        const parts = item.aged.split(' ');
+        const days = parts.length > 0 ? parseInt(parts[0]) : 0;
+        return matchesSearch && (isNaN(days) ? false : days > 30);
       }
       
       return matchesSearch;
     });
   }, [stocks, searchTerm, activeTab]);
+
+  const batchSummary = useMemo(() => {
+    const batches: Record<string, { count: number, models: Set<string>, status: string }> = {};
+    stocks.forEach(s => {
+      if (!batches[s.batch]) {
+        batches[s.batch] = { count: 0, models: new Set(), status: 'Active' };
+      }
+      batches[s.batch].count++;
+      batches[s.batch].models.add(s.model);
+    });
+    return batches;
+  }, [stocks]);
 
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,8 +162,8 @@ export default function FinishedGoodsInventory() {
             <Warehouse className="w-12 h-12" />
           </div>
           <div className="relative z-10">
-            <h4 className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-1">Stock Overview</h4>
-            <div className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-1">Total Stock (Units)</div>
+            <h3 className="text-[12px] font-black uppercase text-brand-electric tracking-[0.2em] mb-3 border-b border-white/10 pb-2">Primary Warehouse</h3>
+            <div className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-1">Total Inventory</div>
             <div className="text-3xl font-bold">1,250</div>
             <p className="text-[10px] text-brand-electric mt-2 font-bold uppercase tracking-tighter shadow-brand-electric/20">+45 Units Today</p>
           </div>
@@ -211,56 +225,105 @@ export default function FinishedGoodsInventory() {
            </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50/50 uppercase text-[9px] font-bold tracking-widest text-gray-500">
-                <th className="px-8 py-4">Serial Identity</th>
-                <th className="px-8 py-4">Model Class</th>
-                <th className="px-8 py-4">Batch ID</th>
-                <th className="px-8 py-4">Location (Bin)</th>
-                <th className="px-8 py-4">Aging</th>
-                <th className="px-8 py-4">Status</th>
-                <th className="px-8 py-4 text-right">Process</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredStocks.map((item, idx) => (
-                <tr key={idx} className="hover:bg-gray-50/30 transition-colors">
-                  <td className="px-8 py-5">
-                     <div className="flex items-center gap-3">
-                        <Tag className="w-4 h-4 text-brand-electric" />
-                        <div>
-                           <div className="text-xs font-bold text-brand-navy font-mono">{item.serial}</div>
-                           <div className="text-[10px] text-gray-400 uppercase font-bold">{item.id}</div>
-                        </div>
-                     </div>
-                  </td>
-                  <td className="px-8 py-5 text-xs text-gray-700 font-medium">{item.model}</td>
-                  <td className="px-8 py-5 text-xs text-gray-500 font-bold tracking-widest">{item.batch}</td>
-                  <td className="px-8 py-5">
-                     <div className="flex items-center gap-2 text-xs font-bold text-brand-steel bg-brand-navy/5 px-2 py-1 rounded w-fit">
-                        <Warehouse className="w-3 h-3" />
-                        {item.bin}
-                     </div>
-                  </td>
-                  <td className="px-8 py-5 text-xs text-gray-500">{item.aged}</td>
-                  <td className="px-8 py-5">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest ${
-                        item.status === 'Ready' ? 'bg-emerald-100 text-emerald-700' : 
-                        item.status === 'Booked' ? 'bg-brand-navy/10 text-brand-navy' : 'bg-status-warning/10 text-status-warning'
-                      }`}>
-                        {item.status}
-                      </span>
-                  </td>
-                  <td className="px-8 py-5 text-right">
-                      <button className="text-brand-steel hover:text-brand-navy transition-all p-1">
-                         <MoreVertical className="w-4 h-4" />
-                      </button>
-                  </td>
+          {activeTab === 'batch' ? (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50/50 uppercase text-[9px] font-bold tracking-widest text-gray-500">
+                  <th className="px-8 py-4">Batch Identity</th>
+                  <th className="px-8 py-4">Associated Models</th>
+                  <th className="px-8 py-4">Quantity</th>
+                  <th className="px-8 py-4">Production Date</th>
+                  <th className="px-8 py-4">Status</th>
+                  <th className="px-8 py-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {Object.entries(batchSummary).map(([batchId, batchData], idx) => {
+                  const data = batchData as { count: number, models: Set<string>, status: string };
+                  return (
+                    <tr key={idx} className="hover:bg-gray-50/30 transition-colors">
+                      <td className="px-8 py-5">
+                         <div className="flex items-center gap-3">
+                            <Box className="w-4 h-4 text-brand-electric" />
+                            <div className="text-xs font-bold text-brand-navy font-mono uppercase">{batchId}</div>
+                         </div>
+                      </td>
+                      <td className="px-8 py-5">
+                         <div className="flex gap-1 flex-wrap">
+                            {Array.from(data.models).map((m, i) => (
+                              <span key={i} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-bold uppercase">{m}</span>
+                            ))}
+                         </div>
+                      </td>
+                      <td className="px-8 py-5 text-xs text-brand-navy font-bold">{data.count} Units</td>
+                      <td className="px-8 py-5 text-xs text-gray-500">Apr 20, 2026</td>
+                      <td className="px-8 py-5">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700">
+                            {data.status}
+                          </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                          <button className="text-brand-steel hover:text-brand-navy transition-all p-2 bg-gray-100 rounded-lg">
+                             <Download className="w-3 h-3" />
+                          </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50/50 uppercase text-[9px] font-bold tracking-widest text-gray-500">
+                  <th className="px-8 py-4">Serial Identity</th>
+                  <th className="px-8 py-4">Model Class</th>
+                  <th className="px-8 py-4">Batch ID</th>
+                  <th className="px-8 py-4">Location (Bin)</th>
+                  <th className="px-8 py-4">Aging</th>
+                  <th className="px-8 py-4">Status</th>
+                  <th className="px-8 py-4 text-right">Process</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredStocks.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50/30 transition-colors">
+                    <td className="px-8 py-5">
+                       <div className="flex items-center gap-3">
+                          <Tag className="w-4 h-4 text-brand-electric" />
+                          <div>
+                             <div className="text-xs font-bold text-brand-navy font-mono">{item.serial}</div>
+                             <div className="text-[10px] text-gray-400 uppercase font-bold">{item.id}</div>
+                          </div>
+                       </div>
+                    </td>
+                    <td className="px-8 py-5 text-xs text-gray-700 font-medium">{item.model}</td>
+                    <td className="px-8 py-5 text-xs text-gray-500 font-bold tracking-widest">{item.batch}</td>
+                    <td className="px-8 py-5">
+                       <div className="flex items-center gap-2 text-xs font-bold text-brand-steel bg-brand-navy/5 px-2 py-1 rounded w-fit">
+                          <Warehouse className="w-3 h-3" />
+                          {item.bin}
+                       </div>
+                    </td>
+                    <td className="px-8 py-5 text-xs text-gray-500">{item.aged}</td>
+                    <td className="px-8 py-5">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest ${
+                          item.status === 'Ready' ? 'bg-emerald-100 text-emerald-700' : 
+                          item.status === 'Booked' ? 'bg-brand-navy/10 text-brand-navy' : 'bg-status-warning/10 text-status-warning'
+                        }`}>
+                          {item.status}
+                        </span>
+                    </td>
+                    <td className="px-8 py-5 text-right">
+                        <button className="text-brand-steel hover:text-brand-navy transition-all p-1">
+                           <MoreVertical className="w-4 h-4" />
+                        </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
